@@ -1,0 +1,6 @@
+.idea
+vendor
+bin
+data_dir
+temp
+go.sum
