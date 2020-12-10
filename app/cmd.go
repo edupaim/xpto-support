@@ -19,12 +19,12 @@ func Execute() error {
 
 func runApplication(cmd *cobra.Command, args []string) {
 	if err := initConfig(); err != nil {
-		logrus.WithField("error", err.Error()).Fatalln("load config")
+		logrus.WithError(err).Fatalln("load config")
 		return
 	}
 	api, err := initializeApi()
 	if err != nil {
-		logrus.WithField("error", err.Error()).Fatalln("initialize application")
+		logrus.WithError(err).Fatalln("initialize application")
 		return
 	}
 	errChan := api.run()

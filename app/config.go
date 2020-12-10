@@ -17,13 +17,13 @@ func initConfig() error {
 	viper.SetEnvPrefix("xpto")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
-		logrus.WithField("message", err.Error()).Errorln("read config file")
+		logrus.WithError(err).Errorln("read config file")
 		return err
 	}
 	fmt.Println("using config file:", viper.ConfigFileUsed())
 	err := viper.Unmarshal(&config)
 	if err != nil {
-		logrus.WithField("message", err.Error()).Errorln("decode config file")
+		logrus.WithError(err).Errorln("decode config file")
 		return err
 	}
 	return nil
