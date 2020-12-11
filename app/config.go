@@ -8,6 +8,14 @@ import (
 
 type Config struct {
 	ServerConfig ServerConfig
+	ArangoConfig ArangoConfig
+}
+
+type ArangoConfig struct {
+	Endpoint string
+	Password string
+	User     string
+	Database string
 }
 
 func (c *Config) WithPort(port int) {

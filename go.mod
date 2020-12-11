@@ -3,6 +3,7 @@ module edupaim/xpto-support
 go 1.13
 
 require (
+	github.com/arangodb/go-driver v1.1.1 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/onsi/gomega v1.10.4
 	github.com/sirupsen/logrus v1.7.0

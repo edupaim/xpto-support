@@ -32,6 +32,7 @@ func main() {
 		&cli.IntFlag{
 			Name:        portFlag + ", p",
 			Usage:       "application port",
+			Required:    true,
 			Value:       0,
 			Destination: &port,
 		},
@@ -47,9 +48,7 @@ func runApplication(configPath string, port int) error {
 	if err != nil {
 		return err
 	}
-	if port != 0 {
-		config.WithPort(port)
-	}
+	config.WithPort(port)
 	api, err := app.InitializeApi(config)
 	if err != nil {
 		return err
