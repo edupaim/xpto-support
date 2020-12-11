@@ -16,9 +16,11 @@ const portFlag = "port"
 
 func main() {
 	cliApp := &cli.App{
-		Name:   "xtpo support application",
-		Usage:  "request drain for xpto application",
-		Action: runApplication,
+		Name:  "xtpo support application",
+		Usage: "request drain for xpto application",
+		Action: func(c *cli.Context) error {
+			return runApplication(c.String(configFlag), c.Int(portFlag))
+		},
 	}
 	cliApp.Flags = []cli.Flag{
 		&cli.StringFlag{
@@ -30,7 +32,7 @@ func main() {
 		&cli.IntFlag{
 			Name:        portFlag + ", p",
 			Usage:       "application port",
-			Value:       5051,
+			Value:       0,
 			Destination: &port,
 		},
 	}
@@ -40,12 +42,12 @@ func main() {
 	}
 }
 
-func runApplication(c *cli.Context) error {
-	config, err := app.InitConfig(c.String("config"))
+func runApplication(configPath string, port int) error {
+	config, err := app.InitConfig(configPath)
 	if err != nil {
 		return err
 	}
-	if port := c.Int(portFlag); port != 0 {
+	if port != 0 {
 		config.WithPort(port)
 	}
 	api, err := app.InitializeApi(config)

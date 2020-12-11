@@ -13,22 +13,23 @@ type Api struct {
 	httpServer *http.Server
 }
 
-func InitializeApi(currentConfig *Config) (*Api, error) {
+func InitializeApi(c *Config) (*Api, error) {
 	r := gin.Default()
 	r.GET("/legacy/integrate", func(c *gin.Context) {
 	})
 	api := &Api{}
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", currentConfig.ServerConfig.Port),
+		Addr:    fmt.Sprintf(":%d", c.ServerConfig.Port),
 		Handler: r,
 	}
 	api.httpServer = srv
-	return nil, nil
+	return api, nil
 }
 
 func (api *Api) Run() <-chan error {
 	apiErrorChan := make(chan error)
 	go func() {
+		defer close(apiErrorChan)
 		err := api.httpServer.ListenAndServe()
 		if err != nil {
 			apiErrorChan <- err
