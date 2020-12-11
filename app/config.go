@@ -1,21 +1,15 @@
 package app
 
 import (
-	"fmt"
+	"edupaim/xpto-support/app/services"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	ServerConfig ServerConfig
-	ArangoConfig ArangoConfig
-}
-
-type ArangoConfig struct {
-	Endpoint string
-	Password string
-	User     string
-	Database string
+	ServerConfig     ServerConfig
+	ArangoConfig     services.ArangoConfig
+	LegacyXptoConfig LegacyXptoConfig
 }
 
 func (c *Config) WithPort(port int) {
@@ -26,7 +20,14 @@ type ServerConfig struct {
 	Port int
 }
 
-func InitConfig(filePath string) (*Config, error) {
+type LegacyXptoConfig struct {
+	Address string
+}
+
+func InitConfig(filePath string, debug bool) (*Config, error) {
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
 	var currentConfig *Config
 	err := loadConfigFromFile(filePath, currentConfig)
 	if err != nil {
@@ -43,7 +44,7 @@ func loadConfigFromFile(filePath string, currentConfig *Config) error {
 		logrus.WithError(err).Errorln("read config file")
 		return err
 	}
-	fmt.Println("using config file:", viper.ConfigFileUsed())
+	logrus.Debugln("using config file:", viper.ConfigFileUsed())
 	err := viper.Unmarshal(currentConfig)
 	if err != nil {
 		logrus.WithError(err).Errorln("decode config file")

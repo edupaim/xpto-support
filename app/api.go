@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"edupaim/xpto-support/app/controllers/command"
+	"edupaim/xpto-support/app/services"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -15,7 +17,22 @@ type Api struct {
 
 func InitializeApi(c *Config) (*Api, error) {
 	r := gin.Default()
+	legacyRepository, err := services.InitializeApiLegacyRepository(c.LegacyXptoConfig.Address)
+	if err != nil {
+		return nil, err
+	}
+	localRepository, err := services.InitializeArangoLocalStorage(c.ArangoConfig)
+	if err != nil {
+		return nil, err
+	}
+	legacyController := command.NewLegacyIntegrateController(legacyRepository, localRepository)
 	r.GET("/legacy/integrate", func(c *gin.Context) {
+		err := legacyController.LegacyIntegrate(nil)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		c.Status(http.StatusOK)
 	})
 	api := &Api{}
 	srv := &http.Server{
