@@ -8,3 +8,10 @@ services:
     - 8080:80
     volumes:
     - ./mock_file/mock_negative.json:/data/db.json
+
+  arangodb:
+    image: arangodb:latest
+    environment:
+      ARANGO_ROOT_PASSWORD: root
+    ports:
+      - 8529:8529
