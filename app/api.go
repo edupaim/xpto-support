@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -12,20 +13,20 @@ type Api struct {
 	httpServer *http.Server
 }
 
-func initializeApi() (*Api, error) {
+func InitializeApi(currentConfig *Config) (*Api, error) {
 	r := gin.Default()
 	r.GET("/legacy/integrate", func(c *gin.Context) {
 	})
 	api := &Api{}
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf(":%d", currentConfig.ServerConfig.Port),
 		Handler: r,
 	}
 	api.httpServer = srv
 	return nil, nil
 }
 
-func (api *Api) run() <-chan error {
+func (api *Api) Run() <-chan error {
 	apiErrorChan := make(chan error)
 	go func() {
 		err := api.httpServer.ListenAndServe()
@@ -36,7 +37,7 @@ func (api *Api) run() <-chan error {
 	return apiErrorChan
 }
 
-func (api *Api) shutdown() {
+func (api *Api) Shutdown() {
 	timeout, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 	err := api.httpServer.Shutdown(timeout)
