@@ -20,6 +20,6 @@ func NewNegativeQueryController(
 	}
 }
 
-func (controller *NegativeQueryController) GetByCustomerDocument(customerDocument string) (*domain.Negative, error) {
+func (controller *NegativeQueryController) GetByCustomerDocument(customerDocument string) ([]domain.Negative, error) {
 	return controller.localRepository.GetNegativeByCustomerDocument(customerDocument)
 }

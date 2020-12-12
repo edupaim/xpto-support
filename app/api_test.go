@@ -51,24 +51,40 @@ func TestApi_Run(t *testing.T) {
 		resp, err = http.Get("http://localhost:5051/negatives?customerDocument=51537476467")
 		g.Expect(err).ShouldNot(gomega.HaveOccurred())
 		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
-		response, err := ioutil.ReadAll(resp.Body)
-		g.Expect(err).ShouldNot(gomega.HaveOccurred())
-		negativeJsonExpected := getJsendJsonFromNegative(domain.Negative{
-			CompanyDocument:  "59291534000167",
-			CompanyName:      "ABC S.A.",
-			CustomerDocument: "51537476467",
-			Value:            1235.23,
-			Contract:         "bc063153-fb9e-4334-9a6c-0d069a42065b",
-			DebtDate:         time.Date(2015, 11, 13, 23, 32, 51, 0, time.UTC),
-			InclusionDate:    time.Date(2020, 11, 13, 23, 32, 51, 0, time.UTC),
-		}, g)
-		g.Expect(response).Should(gomega.MatchJSON(negativeJsonExpected))
+		response := readResponseBody(g, resp)
+		expectedResponse := getJsendJsonFromNegative(g, []domain.Negative{
+			{
+				CompanyDocument:  "59291534000167",
+				CompanyName:      "ABC S.A.",
+				CustomerDocument: "51537476467",
+				Value:            1235.23,
+				Contract:         "bc063153-fb9e-4334-9a6c-0d069a42065b",
+				DebtDate:         time.Date(2015, 11, 13, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 11, 13, 23, 32, 51, 0, time.UTC),
+			},
+			{
+				CompanyDocument:  "77723018000146",
+				CompanyName:      "123 S.A.",
+				CustomerDocument: "51537476467",
+				Value:            400.0,
+				Contract:         "5f206825-3cfe-412f-8302-cc1b24a179b0",
+				DebtDate:         time.Date(2015, 10, 12, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 10, 12, 23, 32, 51, 0, time.UTC),
+			},
+		})
+		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
 		g.Expect(errChan).ShouldNot(gomega.Receive())
 	})
 }
 
-func getJsendJsonFromNegative(negative domain.Negative, g *gomega.WithT) []byte {
-	negativeExpected := jsend.New(negative)
+func readResponseBody(g *gomega.WithT, resp *http.Response) []byte {
+	response, err := ioutil.ReadAll(resp.Body)
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	return response
+}
+
+func getJsendJsonFromNegative(g *gomega.WithT, data interface{}) []byte {
+	negativeExpected := jsend.New(data)
 	negativeJsonExpected, err := json.Marshal(negativeExpected)
 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
 	return negativeJsonExpected
