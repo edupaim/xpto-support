@@ -29,7 +29,7 @@ func NewLegacyIntegrateController(
 func (controller *LegacyIntegrateController) LegacyIntegrate(cmd *IntegrateCmd) error {
 	negatives, err := controller.legacyRepository.GetAllNegatives()
 	if err != nil {
-		logrus.WithError(err).Errorln(err.Error())
+		return err
 	}
 	logrus.WithField("amount", len(negatives)).Debugln("get all negatives from legacy repository")
 	for _, negative := range negatives {

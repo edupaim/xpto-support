@@ -1,7 +1,12 @@
 package domain
 
 import (
+	"errors"
 	"time"
+)
+
+var (
+	DecodeNegativeJsonError = errors.New("decode negative json")
 )
 
 type Negative struct {

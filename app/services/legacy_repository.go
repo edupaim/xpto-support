@@ -4,15 +4,15 @@ import (
 	"edupaim/xpto-support/app/domain"
 	"encoding/json"
 	"errors"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 )
 
 var (
-	RequestNegativesToLegacyApi = errors.New("request negatives to legacy api")
-	ReadResponseFromLegacyApi   = errors.New("read response from legacy api")
-	DecodeNegativesFromResponse = errors.New("decode negatives from response")
+	RequestLegacyApiError = errors.New("request to legacy api")
+	ReadResponseError     = errors.New("read legacy api response")
 )
 
 type LegacyRepository interface {
@@ -41,16 +41,19 @@ func NewApiLegacyRepository(apiUrl *url.URL) *ApiLegacyRepository {
 func (repository *ApiLegacyRepository) GetAllNegatives() ([]domain.Negative, error) {
 	resp, err := http.Get(repository.negativesUrl.String())
 	if err != nil {
-		return nil, RequestNegativesToLegacyApi
+		logrus.WithError(err).Errorln(RequestLegacyApiError.Error())
+		return nil, RequestLegacyApiError
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, ReadResponseFromLegacyApi
+		logrus.WithError(err).Errorln(ReadResponseError.Error())
+		return nil, ReadResponseError
 	}
 	var negatives []domain.Negative
 	err = json.Unmarshal(body, &negatives)
 	if err != nil {
-		return nil, DecodeNegativesFromResponse
+		logrus.WithError(err).Errorln(domain.DecodeNegativeJsonError.Error())
+		return nil, domain.DecodeNegativeJsonError
 	}
 	return negatives, nil
 }

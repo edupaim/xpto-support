@@ -1,12 +1,15 @@
 package app
 
 import (
+	"clevergo.tech/jsend"
 	"edupaim/xpto-support/app/domain"
 	"edupaim/xpto-support/app/services"
+	"encoding/json"
 	"github.com/arangodb/go-driver"
 	arangohttp "github.com/arangodb/go-driver/http"
 	"github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
@@ -33,17 +36,24 @@ func TestApi_Run(t *testing.T) {
 	c := getArangoClient(g)
 	db := getDatabaseFromArango(g, c)
 	_ = db.Remove(nil)
+
+	api, err := InitializeApi(&config)
+	g.Expect(err).ShouldNot(gomega.HaveOccurred())
+	defer api.Shutdown()
+	errChan := api.Run()
+	g.Consistently(errChan).ShouldNot(gomega.Receive())
+
 	t.Run("success integrate legacy database", func(t *testing.T) {
-		api, err := InitializeApi(&config)
-		g.Expect(err).ShouldNot(gomega.HaveOccurred())
-		defer api.Shutdown()
-		errChan := api.Run()
-		resp, err := http.Get("http://localhost:5051/legacy/integrate")
+		resp, err := http.Post("http://localhost:5051/legacy/integrate", "application/json", nil)
 		g.Expect(err).ShouldNot(gomega.HaveOccurred())
 		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
-		g.Expect(errChan).ShouldNot(gomega.Receive())
-		negatives := queryAllNegativesFromDatabase(g, db)
-		g.Expect(negatives).Should(gomega.ContainElements(domain.Negative{
+
+		resp, err = http.Get("http://localhost:5051/negatives?customerDocument=51537476467")
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+		response, err := ioutil.ReadAll(resp.Body)
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		negativeJsonExpected := getJsendJsonFromNegative(domain.Negative{
 			CompanyDocument:  "59291534000167",
 			CompanyName:      "ABC S.A.",
 			CustomerDocument: "51537476467",
@@ -51,21 +61,17 @@ func TestApi_Run(t *testing.T) {
 			Contract:         "bc063153-fb9e-4334-9a6c-0d069a42065b",
 			DebtDate:         time.Date(2015, 11, 13, 23, 32, 51, 0, time.UTC),
 			InclusionDate:    time.Date(2020, 11, 13, 23, 32, 51, 0, time.UTC),
-		}))
+		}, g)
+		g.Expect(response).Should(gomega.MatchJSON(negativeJsonExpected))
+		g.Expect(errChan).ShouldNot(gomega.Receive())
 	})
 }
 
-func queryAllNegativesFromDatabase(g *gomega.WithT, db driver.Database) []domain.Negative {
-	cursor, err := db.Query(nil, "FOR n IN negatives RETURN n", map[string]interface{}{})
+func getJsendJsonFromNegative(negative domain.Negative, g *gomega.WithT) []byte {
+	negativeExpected := jsend.New(negative)
+	negativeJsonExpected, err := json.Marshal(negativeExpected)
 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
-	var negatives []domain.Negative
-	for cursor.HasMore() {
-		negative := domain.Negative{}
-		_, err := cursor.ReadDocument(nil, &negative)
-		g.Expect(err).ShouldNot(gomega.HaveOccurred())
-		negatives = append(negatives, negative)
-	}
-	return negatives
+	return negativeJsonExpected
 }
 
 func getDatabaseFromArango(g *gomega.WithT, c driver.Client) driver.Database {
