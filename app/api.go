@@ -1,26 +1,23 @@
 package app
 
 import (
-	"clevergo.tech/jsend"
 	"context"
 	"edupaim/xpto-support/app/controllers/command"
 	"edupaim/xpto-support/app/controllers/query"
 	"edupaim/xpto-support/app/services"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"go.elastic.co/apm/module/apmgin"
 	"net/http"
 	"time"
 )
 
 type Api struct {
 	httpServer  *http.Server
-	services    ApiServices
+	services    AppServices
 	controllers ApiControllers
 }
 
-type ApiServices struct {
+type AppServices struct {
 	legacyRepository services.LegacyRepository
 	localRepository  services.LocalRepository
 }
@@ -40,39 +37,13 @@ func InitializeApi(c *Config) (*Api, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := api.initializeRouter()
+	r := initializeApiRouter(api.controllers)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", c.ServerConfig.Port),
 		Handler: r,
 	}
 	api.httpServer = srv
 	return api, nil
-}
-
-func (api *Api) initializeRouter() *gin.Engine {
-	r := gin.Default()
-	r.Use(apmgin.Middleware(r))
-	r.POST("/legacy/integrate", func(c *gin.Context) {
-		err := api.controllers.legacyIntegrate.LegacyIntegrate(nil, c.Request.Context())
-		if err != nil {
-			err = jsend.Error(c.Writer, "integrate application with legacy api", http.StatusInternalServerError)
-			logJsendWriteError(err)
-			return
-		}
-		c.Status(http.StatusOK)
-	})
-	r.GET("/negatives", func(c *gin.Context) {
-		customerQuery := c.Request.URL.Query()
-		negative, err := api.controllers.negativesQuery.GetByQuery(customerQuery, c.Request.Context())
-		if err != nil {
-			err = jsend.Error(c.Writer, "get negative by customer document", http.StatusInternalServerError)
-			logJsendWriteError(err)
-			return
-		}
-		err = jsend.Success(c.Writer, negative, http.StatusOK)
-		logJsendWriteError(err)
-	})
-	return r
 }
 
 func (api *Api) initializeControllers() error {

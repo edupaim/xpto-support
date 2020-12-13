@@ -75,6 +75,9 @@ func (localStorage *ArangoLocalRepository) GetNegativeByQuery(queryNegative map[
 	logCtx := logrus.WithContext(ctx)
 	query := NewForQuery(NegativesCollectionName, "negative")
 	for key, value := range queryNegative {
+		if len(value) < 1 {
+			continue
+		}
 		query.Filter(key, "==", value[0])
 	}
 	query.Return()
