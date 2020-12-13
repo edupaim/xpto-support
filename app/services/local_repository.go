@@ -4,9 +4,11 @@ import (
 	"context"
 	"edupaim/xpto-support/app/domain"
 	"errors"
+	"fmt"
 	"github.com/arangodb/go-driver"
 	"github.com/sirupsen/logrus"
 	"go.elastic.co/apm"
+	"strings"
 )
 
 var (
@@ -16,7 +18,7 @@ var (
 
 type LocalRepository interface {
 	SaveNegative(negative domain.Negative, ctx context.Context) error
-	GetNegativeByCustomerDocument(document string, ctx context.Context) ([]domain.Negative, error)
+	GetNegativeByQuery(document map[string][]string, ctx context.Context) ([]domain.Negative, error)
 }
 
 type ArangoLocalRepository struct {
@@ -67,15 +69,18 @@ func (localStorage *ArangoLocalRepository) SaveNegative(negative domain.Negative
 	return nil
 }
 
-func (localStorage *ArangoLocalRepository) GetNegativeByCustomerDocument(document string, ctx context.Context) ([]domain.Negative, error) {
-	span, ctx := apm.StartSpan(ctx, "GetNegativeByCustomerDocument()", "runtime.localRepository")
+func (localStorage *ArangoLocalRepository) GetNegativeByQuery(queryNegative map[string][]string, ctx context.Context) ([]domain.Negative, error) {
+	span, ctx := apm.StartSpan(ctx, "GetNegativeByQuery()", "runtime.localRepository")
 	defer span.End()
 	logCtx := logrus.WithContext(ctx)
-	cursor, err := localStorage.arangoDatabase.Query(nil, "FOR n IN @@coll FILTER n.customerDocument == @customerDocument RETURN n",
-		map[string]interface{}{
-			"@coll":            NegativesCollectionName,
-			"customerDocument": document,
-		})
+	query := NewForQuery(NegativesCollectionName, "negative")
+	for key, value := range queryNegative {
+		query.Filter(key, "==", value[0])
+	}
+	query.Return()
+	cursor, err := localStorage.arangoDatabase.Query(nil,
+		query.String(),
+		map[string]interface{}{})
 	if err != nil {
 		logCtx.WithError(err).Errorln(QueryNegativeError.Error())
 		return nil, QueryNegativeError
@@ -95,4 +100,40 @@ func (localStorage *ArangoLocalRepository) iterateCursorAndReadNegatives(cursor 
 		negatives = append(negatives, negative)
 	}
 	return negatives, nil
+}
+
+type ArangoQueryBuilder struct {
+	query       strings.Builder
+	counterName string
+}
+
+func NewForQuery(repositoryName string, counterName string) *ArangoQueryBuilder {
+	aqb := &ArangoQueryBuilder{
+		counterName: counterName,
+	}
+	aqb.query.WriteString(fmt.Sprintf("FOR %s IN %s", aqb.counterName, repositoryName))
+	return aqb
+}
+
+func (aqb *ArangoQueryBuilder) Filter(fieldName string, condition string, value interface{}) *ArangoQueryBuilder {
+	aqb.query.WriteString(" ")
+
+	switch value.(type) {
+	case string:
+		aqb.query.WriteString(fmt.Sprintf("FILTER %s.%s %s %q", aqb.counterName, fieldName, condition, value))
+	default:
+		aqb.query.WriteString(fmt.Sprintf("FILTER %s.%s %s %v", aqb.counterName, fieldName, condition, value))
+	}
+
+	return aqb
+}
+
+func (aqb *ArangoQueryBuilder) Return() *ArangoQueryBuilder {
+	aqb.query.WriteString(" ")
+	aqb.query.WriteString(fmt.Sprintf("RETURN %s", aqb.counterName))
+	return aqb
+}
+
+func (aqb *ArangoQueryBuilder) String() string {
+	return aqb.query.String()
 }

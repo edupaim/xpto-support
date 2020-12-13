@@ -62,13 +62,8 @@ func (api *Api) initializeRouter() *gin.Engine {
 		c.Status(http.StatusOK)
 	})
 	r.GET("/negatives", func(c *gin.Context) {
-		customerDocument, exist := c.GetQuery("customerDocument")
-		if !exist {
-			err := jsend.Error(c.Writer, "want \"customerDocument\" query", http.StatusBadRequest)
-			logJsendWriteError(err)
-			return
-		}
-		negative, err := api.controllers.negativesQuery.GetByCustomerDocument(customerDocument, c.Request.Context())
+		customerQuery := c.Request.URL.Query()
+		negative, err := api.controllers.negativesQuery.GetByQuery(customerQuery, c.Request.Context())
 		if err != nil {
 			err = jsend.Error(c.Writer, "get negative by customer document", http.StatusInternalServerError)
 			logJsendWriteError(err)

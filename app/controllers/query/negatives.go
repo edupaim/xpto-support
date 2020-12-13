@@ -8,7 +8,7 @@ import (
 )
 
 type NegativesQuery interface {
-	GetByCustomerDocument(customerDocument string, context context.Context) ([]domain.Negative, error)
+	GetByQuery(customerDocument map[string][]string, ctx context.Context) ([]domain.Negative, error)
 }
 
 type NegativeQueryController struct {
@@ -23,14 +23,28 @@ func NewNegativeQueryController(
 	}
 }
 
-func (controller *NegativeQueryController) GetByCustomerDocument(customerDocument string, ctx context.Context) ([]domain.Negative, error) {
-	cd := domain.CryptDocument(customerDocument)
-	err := cd.Encrypt()
-	if err != nil {
-		logrus.WithError(err).Errorln("crypt customer document")
-		return nil, err
+func (controller *NegativeQueryController) GetByQuery(customerDocument map[string][]string, ctx context.Context) ([]domain.Negative, error) {
+	for key, value := range customerDocument {
+		if key == "customerDocument" {
+			cd := domain.CryptDocument(value[0])
+			err := cd.Encrypt()
+			if err != nil {
+				logrus.WithError(err).Errorln("crypt customer document")
+				return nil, err
+			}
+			customerDocument[key][0] = string(cd)
+		}
+		if key == "companyDocument" {
+			cd := domain.CryptDocument(value[0])
+			err := cd.Encrypt()
+			if err != nil {
+				logrus.WithError(err).Errorln("crypt company document")
+				return nil, err
+			}
+			customerDocument[key][0] = string(cd)
+		}
 	}
-	negatives, err := controller.localRepository.GetNegativeByCustomerDocument(string(cd), ctx)
+	negatives, err := controller.localRepository.GetNegativeByQuery(customerDocument, ctx)
 	if err != nil {
 		return nil, err
 	}

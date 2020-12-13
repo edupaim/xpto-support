@@ -49,7 +49,7 @@ func TestApi_Run(t *testing.T) {
 	g.Consistently(errChan).ShouldNot(gomega.Receive())
 	applicationEndpoint := fmt.Sprintf("http://localhost:%d", config.ServerConfig.Port)
 
-	t.Run("integrate and require persisted negatives", func(t *testing.T) {
+	t.Run("integrate and require negatives by customer document", func(t *testing.T) {
 		resp, err := http.Post(applicationEndpoint+"/legacy/integrate", "application/json", nil)
 		g.Expect(err).ShouldNot(gomega.HaveOccurred())
 		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
@@ -183,6 +183,31 @@ func TestApi_Run(t *testing.T) {
 				Contract:         "d6628a0e-d4dd-4f14-8591-2ddc7f1bbeff",
 				DebtDate:         time.Date(2015, 7, 9, 23, 32, 51, 0, time.UTC),
 				InclusionDate:    time.Date(2020, 7, 9, 23, 32, 51, 0, time.UTC),
+			},
+		})
+		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
+	})
+
+	t.Run("integrate and requite negative by company document", func(t *testing.T) {
+		resp, err := http.Post(applicationEndpoint+"/legacy/integrate", "application/json", nil)
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+
+		companyDocument := "59291534000167"
+		negativesRoute := fmt.Sprintf("/negatives?companyDocument=%s", companyDocument)
+		resp, err = http.Get(applicationEndpoint + negativesRoute)
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+		response := readResponseBody(g, resp)
+		expectedResponse := getJsendJson(g, []domain.Negative{
+			{
+				CompanyDocument:  domain.CryptDocument(companyDocument),
+				CompanyName:      "ABC S.A.",
+				CustomerDocument: "51537476467",
+				Value:            1235.23,
+				Contract:         "bc063153-fb9e-4334-9a6c-0d069a42065b",
+				DebtDate:         time.Date(2015, 11, 13, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 11, 13, 23, 32, 51, 0, time.UTC),
 			},
 		})
 		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
