@@ -43,7 +43,7 @@ func TestApi_Run(t *testing.T) {
 	errChan := api.Run()
 	g.Consistently(errChan).ShouldNot(gomega.Receive())
 
-	t.Run("success integrate legacy database", func(t *testing.T) {
+	t.Run("integrate and require persisted negatives", func(t *testing.T) {
 		resp, err := http.Post("http://localhost:5051/legacy/integrate", "application/json", nil)
 		g.Expect(err).ShouldNot(gomega.HaveOccurred())
 		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
@@ -74,6 +74,75 @@ func TestApi_Run(t *testing.T) {
 			},
 		})
 		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
+
+		resp, err = http.Get("http://localhost:5051/negatives?customerDocument=26658236674")
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+		response = readResponseBody(g, resp)
+		expectedResponse = getJsendJson(g, []domain.Negative{
+			{
+				CompanyDocument:  "04843574000182",
+				CompanyName:      "DBZ S.A.",
+				CustomerDocument: "26658236674",
+				Value:            59.99,
+				Contract:         "3132f136-3889-4efb-bf92-e1efbb3fe15e",
+				DebtDate:         time.Date(2015, 9, 11, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 9, 11, 23, 32, 51, 0, time.UTC),
+			},
+		})
+		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
+
+		resp, err = http.Get("http://localhost:5051/negatives?customerDocument=62824334010")
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+		response = readResponseBody(g, resp)
+		expectedResponse = getJsendJson(g, []domain.Negative{
+			{
+				CompanyDocument:  "23993551000107",
+				CompanyName:      "XPTO S.A.",
+				CustomerDocument: "62824334010",
+				Value:            230.50,
+				Contract:         "8b441dbb-3bb4-4fc9-9b46-bdaad00a7a98",
+				DebtDate:         time.Date(2015, 8, 10, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 8, 10, 23, 32, 51, 0, time.UTC),
+			},
+		})
+		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
+
+		resp, err = http.Get("http://localhost:5051/negatives?customerDocument=62824334010")
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+		response = readResponseBody(g, resp)
+		expectedResponse = getJsendJson(g, []domain.Negative{
+			{
+				CompanyDocument:  "23993551000107",
+				CompanyName:      "XPTO S.A.",
+				CustomerDocument: "62824334010",
+				Value:            230.50,
+				Contract:         "8b441dbb-3bb4-4fc9-9b46-bdaad00a7a98",
+				DebtDate:         time.Date(2015, 8, 10, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 8, 10, 23, 32, 51, 0, time.UTC),
+			},
+		})
+		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
+
+		resp, err = http.Get("http://localhost:5051/negatives?customerDocument=25124543043")
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+		response = readResponseBody(g, resp)
+		expectedResponse = getJsendJson(g, []domain.Negative{
+			{
+				CompanyDocument:  "70170935000100",
+				CompanyName:      "ASD S.A.",
+				CustomerDocument: "25124543043",
+				Value:            10340.67,
+				Contract:         "d6628a0e-d4dd-4f14-8591-2ddc7f1bbeff",
+				DebtDate:         time.Date(2015, 7, 9, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 7, 9, 23, 32, 51, 0, time.UTC),
+			},
+		})
+		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
+
 		g.Expect(errChan).ShouldNot(gomega.Receive())
 	})
 }
