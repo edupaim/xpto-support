@@ -14,23 +14,44 @@ import (
 )
 
 type Api struct {
-	httpServer *http.Server
+	httpServer  *http.Server
+	services    ApiServices
+	controllers ApiControllers
+}
+
+type ApiServices struct {
+	legacyRepository services.LegacyRepository
+	localRepository  services.LocalRepository
+}
+
+type ApiControllers struct {
+	legacyIntegrate command.LegacyIntegrate
+	negativesQuery  query.NegativesQuery
 }
 
 func InitializeApi(c *Config) (*Api, error) {
+	api := &Api{}
+	err := api.initializeServices(c)
+	if err != nil {
+		return nil, err
+	}
+	err = api.initializeControllers()
+	if err != nil {
+		return nil, err
+	}
+	r := api.initializeRoutes()
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", c.ServerConfig.Port),
+		Handler: r,
+	}
+	api.httpServer = srv
+	return api, nil
+}
+
+func (api *Api) initializeRoutes() *gin.Engine {
 	r := gin.Default()
-	legacyRepository, err := services.InitializeApiLegacyRepository(c.LegacyXptoConfig.Address)
-	if err != nil {
-		return nil, err
-	}
-	localRepository, err := services.InitializeArangoLocalRepository(c.ArangoConfig)
-	if err != nil {
-		return nil, err
-	}
-	legacyController := command.NewLegacyIntegrateController(legacyRepository, localRepository)
-	negativeController := query.NewNegativeQueryController(localRepository)
 	r.POST("/legacy/integrate", func(c *gin.Context) {
-		err := legacyController.LegacyIntegrate(nil)
+		err := api.controllers.legacyIntegrate.LegacyIntegrate(nil)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
@@ -40,11 +61,11 @@ func InitializeApi(c *Config) (*Api, error) {
 	r.GET("/negatives", func(c *gin.Context) {
 		customerDocument, exist := c.GetQuery("customerDocument")
 		if !exist {
-			err = jsend.Error(c.Writer, "want \"customerDocument\" query", http.StatusBadRequest)
+			err := jsend.Error(c.Writer, "want \"customerDocument\" query", http.StatusBadRequest)
 			logJsendWriteError(err)
 			return
 		}
-		negative, err := negativeController.GetByCustomerDocument(customerDocument)
+		negative, err := api.controllers.negativesQuery.GetByCustomerDocument(customerDocument)
 		if err != nil {
 			err = jsend.Error(c.Writer, "get negative by customer document", http.StatusInternalServerError)
 			logJsendWriteError(err)
@@ -53,13 +74,29 @@ func InitializeApi(c *Config) (*Api, error) {
 		err = jsend.Success(c.Writer, negative, http.StatusOK)
 		logJsendWriteError(err)
 	})
-	api := &Api{}
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", c.ServerConfig.Port),
-		Handler: r,
+	return r
+}
+
+func (api *Api) initializeControllers() error {
+	legacyController := command.NewLegacyIntegrateController(api.services.legacyRepository, api.services.localRepository)
+	api.controllers.legacyIntegrate = legacyController
+	negativeController := query.NewNegativeQueryController(api.services.localRepository)
+	api.controllers.negativesQuery = negativeController
+	return nil
+}
+
+func (api *Api) initializeServices(c *Config) error {
+	legacyRepository, err := services.InitializeApiLegacyRepository(c.LegacyXptoConfig.Address)
+	if err != nil {
+		return err
 	}
-	api.httpServer = srv
-	return api, nil
+	api.services.legacyRepository = legacyRepository
+	localRepository, err := services.InitializeArangoLocalRepository(c.ArangoConfig)
+	if err != nil {
+		return err
+	}
+	api.services.localRepository = localRepository
+	return nil
 }
 
 func logJsendWriteError(err error) {

@@ -7,7 +7,7 @@ import (
 )
 
 type NegativesQuery interface {
-	GetByCustomerDocument(customerDocument string) (*domain.Negative, error)
+	GetByCustomerDocument(customerDocument string) ([]domain.Negative, error)
 }
 
 type NegativeQueryController struct {

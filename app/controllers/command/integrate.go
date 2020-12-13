@@ -6,7 +6,7 @@ import (
 )
 
 type LegacyIntegrate interface {
-	LegacyIntegrate(cmd IntegrateCmd) error
+	LegacyIntegrate(cmd *IntegrateCmd) error
 }
 
 type IntegrateCmd struct {
