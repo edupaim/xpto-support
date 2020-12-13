@@ -6,7 +6,9 @@ import (
 )
 
 var (
-	DecodeNegativeJsonError = errors.New("decode negative json")
+	DecodeNegativeJsonError      = errors.New("decode negative json")
+	EncryptCustomerDocumentError = errors.New("encrypt customer document")
+	DecryptCustomerDocumentError = errors.New("decrypt customer document")
 )
 
 type Negative struct {
@@ -25,37 +27,29 @@ func (n *Negative) DatesToUTC() {
 }
 
 func (n *Negative) EncryptCustomerDocument() error {
-	document, err := n.CustomerDocument.Encrypt()
-	if err != nil {
-		return err
-	}
-	n.CustomerDocument = document
-	return nil
+	return n.CustomerDocument.Encrypt()
 }
 
 func (n *Negative) DecryptCustomerDocument() error {
-	document, err := n.CustomerDocument.Decrypt()
-	if err != nil {
-		return err
-	}
-	n.CustomerDocument = document
-	return nil
+	return n.CustomerDocument.Decrypt()
 }
 
 type CustomerDocument string
 
-func (c CustomerDocument) Encrypt() (CustomerDocument, error) {
-	crypt, err := encrypt(string(c))
+func (c *CustomerDocument) Encrypt() error {
+	crypt, err := encrypt(string(*c))
 	if err != nil {
-		return "", err
+		return err
 	}
-	return CustomerDocument(crypt), nil
+	*c = CustomerDocument(crypt)
+	return nil
 }
 
-func (c CustomerDocument) Decrypt() (CustomerDocument, error) {
-	crypt, err := decrypt(string(c))
+func (c *CustomerDocument) Decrypt() error {
+	crypt, err := decrypt(string(*c))
 	if err != nil {
-		return "", err
+		return err
 	}
-	return CustomerDocument(crypt), nil
+	*c = CustomerDocument(crypt)
+	return nil
 }

@@ -48,9 +48,9 @@ services:
 
   xpto-support:
     image: xpto-support:0.0.0
-    command: "--config=/app/config.json --port=5051"
+    command: "--config=/app/config.json --port=5052"
     ports:
-      - 5051:5051
+      - 5052:5052
     volumes:
       - ./docker-files/config.json:/app/config.json
     environment:

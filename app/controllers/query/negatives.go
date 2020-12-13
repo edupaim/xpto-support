@@ -25,7 +25,7 @@ func NewNegativeQueryController(
 
 func (controller *NegativeQueryController) GetByCustomerDocument(customerDocument string, ctx context.Context) ([]domain.Negative, error) {
 	cd := domain.CustomerDocument(customerDocument)
-	cd, err := cd.Encrypt()
+	err := cd.Encrypt()
 	if err != nil {
 		logrus.WithError(err).Errorln("crypt customer document")
 		return nil, err
