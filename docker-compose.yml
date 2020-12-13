@@ -6,6 +6,7 @@ services:
     image: clue/json-server
     ports:
       - 8080:80
+    restart: always
     volumes:
       - ./docker-files/mock_negative.json:/data/db.json
 
@@ -15,11 +16,10 @@ services:
       ARANGO_ROOT_PASSWORD: root
     ports:
       - 8529:8529
+    restart: always
 
   elasticsearch:
     image: elasticsearch:7.4.0
-    ports:
-      - 9200:9200
     environment:
       - discovery.type=single-node
 
@@ -27,6 +27,7 @@ services:
     image: kibana:7.4.0
     ports:
       - 5601:5601
+    restart: always
     depends_on:
       - elasticsearch
 
@@ -34,6 +35,7 @@ services:
     image: elastic/apm-server:7.4.0
     ports:
       - 8200:8200
+    restart: always
     command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
     depends_on:
       - elasticsearch
@@ -45,12 +47,15 @@ services:
       - "81:80"
     volumes:
       - ./docker-files/ambassador.yaml:/ambassador/ambassador-config/ambassador.yaml
+    environment:
+      - AMBASSADOR_NO_KUBEWATCH=no_kubewatch
+    depends_on:
+      - xpto-support
 
   xpto-support:
     image: xpto-support:0.0.0
     command: "--config=/app/config.json --port=5052"
-    ports:
-      - 5052:5052
+    restart: always
     volumes:
       - ./docker-files/config.json:/app/config.json
     environment:
