@@ -40,7 +40,7 @@ func InitializeApi(c *Config) (*Api, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := api.initializeRoutes()
+	r := api.initializeRouter()
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", c.ServerConfig.Port),
 		Handler: r,
@@ -49,10 +49,9 @@ func InitializeApi(c *Config) (*Api, error) {
 	return api, nil
 }
 
-func (api *Api) initializeRoutes() *gin.Engine {
+func (api *Api) initializeRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(apmgin.Middleware(r))
-
 	r.POST("/legacy/integrate", func(c *gin.Context) {
 		err := api.controllers.legacyIntegrate.LegacyIntegrate(nil, c.Request.Context())
 		if err != nil {

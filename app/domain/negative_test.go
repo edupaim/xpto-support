@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"fmt"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/gstruct"
 	"testing"
@@ -41,11 +40,8 @@ func TestNegative_EncryptCustomerDocument(t *testing.T) {
 	}
 	err := negative.EncryptCustomerDocument()
 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
-	fmt.Println(document)
-	fmt.Println(negative.CustomerDocument)
 	g.Expect(negative.CustomerDocument).ShouldNot(gomega.Equal(document))
 	err = negative.DecryptCustomerDocument()
 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
-	fmt.Println(negative.CustomerDocument)
 	g.Expect(negative.CustomerDocument).Should(gomega.Equal(document))
 }

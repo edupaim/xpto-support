@@ -55,12 +55,11 @@ func TestApi_Run(t *testing.T) {
 		customerDocument1 := "51537476467"
 		resp = requestNegativeToXptoSupportApplication(customerDocument1, applicationEndpoint, g)
 		response := readResponseBody(g, resp)
-		document := domain.CustomerDocument(customerDocument1)
 		expectedResponse := getJsendJson(g, []domain.Negative{
 			{
 				CompanyDocument:  "59291534000167",
 				CompanyName:      "ABC S.A.",
-				CustomerDocument: document,
+				CustomerDocument: domain.CustomerDocument(customerDocument1),
 				Value:            1235.23,
 				Contract:         "bc063153-fb9e-4334-9a6c-0d069a42065b",
 				DebtDate:         time.Date(2015, 11, 13, 23, 32, 51, 0, time.UTC),
@@ -69,7 +68,7 @@ func TestApi_Run(t *testing.T) {
 			{
 				CompanyDocument:  "77723018000146",
 				CompanyName:      "123 S.A.",
-				CustomerDocument: document,
+				CustomerDocument: domain.CustomerDocument(customerDocument1),
 				Value:            400.0,
 				Contract:         "5f206825-3cfe-412f-8302-cc1b24a179b0",
 				DebtDate:         time.Date(2015, 10, 12, 23, 32, 51, 0, time.UTC),
