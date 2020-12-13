@@ -19,7 +19,8 @@ type LegacyIntegrateController struct {
 
 func NewLegacyIntegrateController(
 	legacyRepo services.LegacyRepository,
-	localRepo services.LocalRepository) *LegacyIntegrateController {
+	localRepo services.LocalRepository,
+) *LegacyIntegrateController {
 	return &LegacyIntegrateController{
 		legacyRepository: legacyRepo,
 		localRepository:  localRepo,
@@ -34,6 +35,10 @@ func (controller *LegacyIntegrateController) LegacyIntegrate(cmd *IntegrateCmd) 
 	logrus.WithField("amount", len(negatives)).Debugln("get all negatives from legacy repository")
 	for _, negative := range negatives {
 		negative.DatesToUTC()
+		err = negative.EncryptCustomerDocument()
+		if err != nil {
+			return err
+		}
 		err = controller.localRepository.SaveNegative(negative)
 		if err != nil {
 			return err

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"edupaim/xpto-support/app/domain"
 	"edupaim/xpto-support/app/services"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -35,6 +36,10 @@ func InitConfig(filePath string, debug bool) (*Config, error) {
 	}
 	viper.SetEnvPrefix("xpto")
 	viper.AutomaticEnv()
+	passphrase := viper.GetString("passphrase")
+	if passphrase != "" {
+		domain.SetCryptPassphrase(passphrase)
+	}
 	return currentConfig, nil
 }
 

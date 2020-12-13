@@ -10,7 +10,6 @@ import (
 var (
 	SaveNegativeError  = errors.New("save negative")
 	QueryNegativeError = errors.New("query negative from database")
-	NotExistError      = errors.New("not exist negative")
 )
 
 type LocalRepository interface {
@@ -18,12 +17,12 @@ type LocalRepository interface {
 	GetNegativeByCustomerDocument(document string) ([]domain.Negative, error)
 }
 
-type ArangoLocalStorage struct {
+type ArangoLocalRepository struct {
 	arangoDatabase      driver.Database
 	negativesCollection driver.Collection
 }
 
-func InitializeArangoLocalStorage(c ArangoConfig) (*ArangoLocalStorage, error) {
+func InitializeArangoLocalRepository(c ArangoConfig) (*ArangoLocalRepository, error) {
 	arangoClient, err := GetArangoClient(c)
 	if err != nil {
 		return nil, err
@@ -36,17 +35,17 @@ func InitializeArangoLocalStorage(c ArangoConfig) (*ArangoLocalStorage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewArangoLocalStorage(db, negativesColl), nil
+	return NewArangoLocalRepository(db, negativesColl), nil
 }
 
-func NewArangoLocalStorage(db driver.Database, negativesColl driver.Collection) *ArangoLocalStorage {
-	return &ArangoLocalStorage{
+func NewArangoLocalRepository(db driver.Database, negativesColl driver.Collection) *ArangoLocalRepository {
+	return &ArangoLocalRepository{
 		arangoDatabase:      db,
 		negativesCollection: negativesColl,
 	}
 }
 
-func (localStorage *ArangoLocalStorage) SaveNegative(negative domain.Negative) error {
+func (localStorage *ArangoLocalRepository) SaveNegative(negative domain.Negative) error {
 	meta, err := localStorage.negativesCollection.CreateDocument(nil, negative)
 	if err != nil {
 		logrus.WithError(err).Errorln(SaveNegativeError.Error())
@@ -57,7 +56,7 @@ func (localStorage *ArangoLocalStorage) SaveNegative(negative domain.Negative) e
 	return nil
 }
 
-func (localStorage *ArangoLocalStorage) GetNegativeByCustomerDocument(document string) ([]domain.Negative, error) {
+func (localStorage *ArangoLocalRepository) GetNegativeByCustomerDocument(document string) ([]domain.Negative, error) {
 	cursor, err := localStorage.arangoDatabase.Query(nil, "FOR n IN @@coll FILTER n.customerDocument == @customerDocument RETURN n",
 		map[string]interface{}{
 			"@coll":            negativesCollectionName,
@@ -76,10 +75,6 @@ func (localStorage *ArangoLocalStorage) GetNegativeByCustomerDocument(document s
 			return nil, domain.DecodeNegativeJsonError
 		}
 		negatives = append(negatives, negative)
-	}
-	if len(negatives) == 0 {
-		logrus.WithError(err).Errorln(NotExistError.Error())
-		return nil, NotExistError
 	}
 	return negatives, nil
 }

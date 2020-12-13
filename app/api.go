@@ -23,7 +23,7 @@ func InitializeApi(c *Config) (*Api, error) {
 	if err != nil {
 		return nil, err
 	}
-	localRepository, err := services.InitializeArangoLocalStorage(c.ArangoConfig)
+	localRepository, err := services.InitializeArangoLocalRepository(c.ArangoConfig)
 	if err != nil {
 		return nil, err
 	}
