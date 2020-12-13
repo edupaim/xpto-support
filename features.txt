@@ -1,0 +1,5 @@
+* endpoint para integrar api legada à aplicação de support
+* endpoint para buscar negativados
+* encriptação de dados sensiveis com AES lib
+* instrumentação da aplicação com APM Server + ELK
+* api gateway com Ambassador

@@ -39,7 +39,7 @@ type CustomerDocument string
 func (c *CustomerDocument) Encrypt() error {
 	crypt, err := encrypt(string(*c))
 	if err != nil {
-		return err
+		return EncryptCustomerDocumentError
 	}
 	*c = CustomerDocument(crypt)
 	return nil
@@ -48,7 +48,7 @@ func (c *CustomerDocument) Encrypt() error {
 func (c *CustomerDocument) Decrypt() error {
 	crypt, err := decrypt(string(*c))
 	if err != nil {
-		return err
+		return DecryptCustomerDocumentError
 	}
 	*c = CustomerDocument(crypt)
 	return nil
