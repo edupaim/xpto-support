@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"go.elastic.co/apm/module/apmgin"
 	"net/http"
 	"time"
 )
@@ -50,10 +51,13 @@ func InitializeApi(c *Config) (*Api, error) {
 
 func (api *Api) initializeRoutes() *gin.Engine {
 	r := gin.Default()
+	r.Use(apmgin.Middleware(r))
+
 	r.POST("/legacy/integrate", func(c *gin.Context) {
-		err := api.controllers.legacyIntegrate.LegacyIntegrate(nil)
+		err := api.controllers.legacyIntegrate.LegacyIntegrate(nil, c.Request.Context())
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
+			err = jsend.Error(c.Writer, "integrate application with legacy api", http.StatusInternalServerError)
+			logJsendWriteError(err)
 			return
 		}
 		c.Status(http.StatusOK)
@@ -65,7 +69,7 @@ func (api *Api) initializeRoutes() *gin.Engine {
 			logJsendWriteError(err)
 			return
 		}
-		negative, err := api.controllers.negativesQuery.GetByCustomerDocument(customerDocument)
+		negative, err := api.controllers.negativesQuery.GetByCustomerDocument(customerDocument, c.Request.Context())
 		if err != nil {
 			err = jsend.Error(c.Writer, "get negative by customer document", http.StatusInternalServerError)
 			logJsendWriteError(err)

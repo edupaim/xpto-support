@@ -33,6 +33,7 @@ var config = Config{
 func TestApi_Run(t *testing.T) {
 	g := gomega.NewWithT(t)
 	logrus.SetLevel(logrus.DebugLevel)
+
 	c := getArangoClient(g)
 	db := getDatabaseFromArango(g, c)
 	_ = db.Remove(nil)
@@ -142,9 +143,9 @@ func TestApi_Run(t *testing.T) {
 			},
 		})
 		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
-
-		g.Expect(errChan).ShouldNot(gomega.Receive())
 	})
+
+	g.Expect(errChan).ShouldNot(gomega.Receive())
 }
 
 func readResponseBody(g *gomega.WithT, resp *http.Response) []byte {

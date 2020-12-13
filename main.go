@@ -10,16 +10,18 @@ import (
 
 var fileName string
 var port int
+var debug bool
 
 const configFlag = "config"
 const portFlag = "port"
+const debugFlag = "debug"
 
 func main() {
 	cliApp := &cli.App{
 		Name:  "xtpo support application",
 		Usage: "request drain for xpto application",
 		Action: func(c *cli.Context) error {
-			return runApplication(c.String(configFlag), c.Int(portFlag))
+			return runApplication()
 		},
 	}
 	cliApp.Flags = []cli.Flag{
@@ -27,14 +29,21 @@ func main() {
 			Name:        configFlag + ", c",
 			Usage:       "configuration file",
 			Value:       "./config.json",
+			Required:    true,
 			Destination: &fileName,
 		},
 		&cli.IntFlag{
 			Name:        portFlag + ", p",
 			Usage:       "application port",
-			Required:    true,
 			Value:       0,
+			Required:    true,
 			Destination: &port,
+		},
+		&cli.BoolFlag{
+			Name:        debugFlag + ", d",
+			Usage:       "debug flag",
+			Value:       false,
+			Destination: &debug,
 		},
 	}
 	err := cliApp.Run(os.Args)
@@ -43,8 +52,8 @@ func main() {
 	}
 }
 
-func runApplication(configPath string, port int) error {
-	config, err := app.InitConfig(configPath)
+func runApplication() error {
+	config, err := app.InitConfig(fileName, debug)
 	if err != nil {
 		return err
 	}

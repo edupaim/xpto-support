@@ -5,9 +5,9 @@ services:
   json-server:
     image: clue/json-server
     ports:
-    - 8080:80
+      - 8080:80
     volumes:
-    - ./mock_file/mock_negative.json:/data/db.json
+      - ./mock_file/mock_negative.json:/data/db.json
 
   arangodb:
     image: arangodb:latest
@@ -15,3 +15,29 @@ services:
       ARANGO_ROOT_PASSWORD: root
     ports:
       - 8529:8529
+
+  elasticsearch:
+    image: elasticsearch:7.4.0
+    container_name: elasticsearch
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
+
+  kibana:
+    image: kibana:7.4.0
+    container_name: kibana
+    ports:
+      - 5601:5601
+    depends_on:
+      - 'elasticsearch'
+
+  apm-server:
+    image: elastic/apm-server:7.4.0
+    container_name: apm_server
+    ports:
+      - 8200:8200
+    command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
+    depends_on:
+      - 'elasticsearch'
+      - 'kibana'

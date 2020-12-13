@@ -1,10 +1,12 @@
 package services
 
 import (
+	"context"
 	"edupaim/xpto-support/app/domain"
 	"encoding/json"
 	"errors"
 	"github.com/sirupsen/logrus"
+	"go.elastic.co/apm"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -16,7 +18,7 @@ var (
 )
 
 type LegacyRepository interface {
-	GetAllNegatives() ([]domain.Negative, error)
+	GetAllNegatives(context.Context) ([]domain.Negative, error)
 }
 
 type ApiLegacyRepository struct {
@@ -38,21 +40,24 @@ func NewApiLegacyRepository(apiUrl *url.URL) *ApiLegacyRepository {
 	return &ApiLegacyRepository{negativesUrl: negativesUrl}
 }
 
-func (repository *ApiLegacyRepository) GetAllNegatives() ([]domain.Negative, error) {
+func (repository *ApiLegacyRepository) GetAllNegatives(ctx context.Context) ([]domain.Negative, error) {
+	span, ctx := apm.StartSpan(ctx, "GetAllNegatives()", "runtime.legacyRepository")
+	defer span.End()
+	logCtx := logrus.WithContext(ctx)
 	resp, err := http.Get(repository.negativesUrl.String())
 	if err != nil {
-		logrus.WithError(err).Errorln(RequestLegacyApiError.Error())
+		logCtx.WithError(err).Errorln(RequestLegacyApiError.Error())
 		return nil, RequestLegacyApiError
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		logrus.WithError(err).Errorln(ReadResponseError.Error())
+		logCtx.WithError(err).Errorln(ReadResponseError.Error())
 		return nil, ReadResponseError
 	}
 	var negatives []domain.Negative
 	err = json.Unmarshal(body, &negatives)
 	if err != nil {
-		logrus.WithError(err).Errorln(domain.DecodeNegativeJsonError.Error())
+		logCtx.WithError(err).Errorln(domain.DecodeNegativeJsonError.Error())
 		return nil, domain.DecodeNegativeJsonError
 	}
 	return negatives, nil

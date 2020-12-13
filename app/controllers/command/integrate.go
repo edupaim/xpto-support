@@ -1,12 +1,13 @@
 package command
 
 import (
+	"context"
 	"edupaim/xpto-support/app/services"
 	"github.com/sirupsen/logrus"
 )
 
 type LegacyIntegrate interface {
-	LegacyIntegrate(cmd *IntegrateCmd) error
+	LegacyIntegrate(cmd *IntegrateCmd, ctx context.Context) error
 }
 
 type IntegrateCmd struct {
@@ -27,8 +28,8 @@ func NewLegacyIntegrateController(
 	}
 }
 
-func (controller *LegacyIntegrateController) LegacyIntegrate(cmd *IntegrateCmd) error {
-	negatives, err := controller.legacyRepository.GetAllNegatives()
+func (controller *LegacyIntegrateController) LegacyIntegrate(cmd *IntegrateCmd, ctx context.Context) error {
+	negatives, err := controller.legacyRepository.GetAllNegatives(ctx)
 	if err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func (controller *LegacyIntegrateController) LegacyIntegrate(cmd *IntegrateCmd) 
 		if err != nil {
 			return err
 		}
-		err = controller.localRepository.SaveNegative(negative)
+		err = controller.localRepository.SaveNegative(negative, ctx)
 		if err != nil {
 			return err
 		}
