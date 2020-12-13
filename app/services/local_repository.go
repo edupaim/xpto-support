@@ -51,13 +51,19 @@ func (localStorage *ArangoLocalRepository) SaveNegative(negative domain.Negative
 	span, ctx := apm.StartSpan(ctx, "SaveNegative()", "runtime.localRepository")
 	defer span.End()
 	logCtx := logrus.WithContext(ctx)
-	meta, err := localStorage.negativesCollection.CreateDocument(nil, negative)
+	_, err := localStorage.arangoDatabase.Query(nil, `
+	UPSERT {customerDocument: @customerDocument, companyDocument: @companyDocument}
+	INSERT @negative
+	UPDATE @negative IN @@coll`, map[string]interface{}{
+		"customerDocument": negative.CustomerDocument,
+		"companyDocument":  negative.CompanyDocument,
+		"@coll":            NegativesCollectionName,
+		"negative":         negative,
+	})
 	if err != nil {
 		logCtx.WithError(err).Errorln(SaveNegativeError.Error())
 		return SaveNegativeError
 	}
-	logCtx.WithField("key", meta.Key).
-		Debugln("create document on negatives collection")
 	return nil
 }
 
@@ -74,10 +80,14 @@ func (localStorage *ArangoLocalRepository) GetNegativeByCustomerDocument(documen
 		logCtx.WithError(err).Errorln(QueryNegativeError.Error())
 		return nil, QueryNegativeError
 	}
+	return localStorage.iterateCursorAndReadNegatives(cursor, logCtx)
+}
+
+func (localStorage *ArangoLocalRepository) iterateCursorAndReadNegatives(cursor driver.Cursor, logCtx *logrus.Entry) ([]domain.Negative, error) {
 	var negatives []domain.Negative
 	for cursor.HasMore() {
 		negative := domain.Negative{}
-		_, err = cursor.ReadDocument(nil, &negative)
+		_, err := cursor.ReadDocument(nil, &negative)
 		if err != nil {
 			logCtx.WithError(err).Errorln(domain.DecodeNegativeJsonError.Error())
 			return nil, domain.DecodeNegativeJsonError

@@ -9,16 +9,18 @@ var (
 	DecodeNegativeJsonError      = errors.New("decode negative json")
 	EncryptCustomerDocumentError = errors.New("encrypt customer document")
 	DecryptCustomerDocumentError = errors.New("decrypt customer document")
+	EncryptCompanyDocumentError  = errors.New("encrypt company document")
+	DecryptCompanyDocumentError  = errors.New("decrypt company document")
 )
 
 type Negative struct {
-	CompanyDocument  string           `json:"companyDocument"`
-	CompanyName      string           `json:"companyName"`
-	CustomerDocument CustomerDocument `json:"customerDocument"`
-	Value            float64          `json:"value"`
-	Contract         string           `json:"contract"`
-	DebtDate         time.Time        `json:"debtDate"`
-	InclusionDate    time.Time        `json:"inclusionDate"`
+	CompanyDocument  CryptDocument `json:"companyDocument"`
+	CompanyName      string        `json:"companyName"`
+	CustomerDocument CryptDocument `json:"customerDocument"`
+	Value            float64       `json:"value"`
+	Contract         string        `json:"contract"`
+	DebtDate         time.Time     `json:"debtDate"`
+	InclusionDate    time.Time     `json:"inclusionDate"`
 }
 
 func (n *Negative) DatesToUTC() {
@@ -26,30 +28,50 @@ func (n *Negative) DatesToUTC() {
 	n.InclusionDate = n.InclusionDate.UTC()
 }
 
-func (n *Negative) EncryptCustomerDocument() error {
+func (n *Negative) EncryptDocuments() error {
+	err := n.CompanyDocument.Encrypt()
+	if err != nil {
+		return err
+	}
 	return n.CustomerDocument.Encrypt()
 }
 
-func (n *Negative) DecryptCustomerDocument() error {
+func (n *Negative) DecryptDocuments() error {
+	err := n.CompanyDocument.Decrypt()
+	if err != nil {
+		return err
+	}
 	return n.CustomerDocument.Decrypt()
 }
 
-type CustomerDocument string
-
-func (c *CustomerDocument) Encrypt() error {
-	crypt, err := encrypt(string(*c))
+func (n *Negative) EncryptCustomerDocument() error {
+	err := n.CustomerDocument.Encrypt()
 	if err != nil {
 		return EncryptCustomerDocumentError
 	}
-	*c = CustomerDocument(crypt)
 	return nil
 }
 
-func (c *CustomerDocument) Decrypt() error {
-	crypt, err := decrypt(string(*c))
+func (n *Negative) DecryptCustomerDocument() error {
+	err := n.CustomerDocument.Decrypt()
 	if err != nil {
 		return DecryptCustomerDocumentError
 	}
-	*c = CustomerDocument(crypt)
+	return nil
+}
+
+func (n *Negative) EncryptCompanyDocument() error {
+	err := n.CompanyDocument.Encrypt()
+	if err != nil {
+		return EncryptCompanyDocumentError
+	}
+	return nil
+}
+
+func (n *Negative) DecryptCompanyDocument() error {
+	err := n.CompanyDocument.Decrypt()
+	if err != nil {
+		return DecryptCompanyDocumentError
+	}
 	return nil
 }

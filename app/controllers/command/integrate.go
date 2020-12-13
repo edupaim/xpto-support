@@ -36,7 +36,7 @@ func (controller *LegacyIntegrateController) LegacyIntegrate(cmd *IntegrateCmd, 
 	logrus.WithField("amount", len(negatives)).Debugln("get all negatives from legacy repository")
 	for _, negative := range negatives {
 		negative.DatesToUTC()
-		err = negative.EncryptCustomerDocument()
+		err = negative.EncryptDocuments()
 		if err != nil {
 			return err
 		}

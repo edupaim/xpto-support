@@ -47,9 +47,9 @@ func TestApi_Run(t *testing.T) {
 	defer api.Shutdown()
 	errChan := api.Run()
 	g.Consistently(errChan).ShouldNot(gomega.Receive())
+	applicationEndpoint := fmt.Sprintf("http://localhost:%d", config.ServerConfig.Port)
 
 	t.Run("integrate and require persisted negatives", func(t *testing.T) {
-		applicationEndpoint := fmt.Sprintf("http://localhost:%d", config.ServerConfig.Port)
 		resp, err := http.Post(applicationEndpoint+"/legacy/integrate", "application/json", nil)
 		g.Expect(err).ShouldNot(gomega.HaveOccurred())
 		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
@@ -64,7 +64,7 @@ func TestApi_Run(t *testing.T) {
 			{
 				CompanyDocument:  "59291534000167",
 				CompanyName:      "ABC S.A.",
-				CustomerDocument: domain.CustomerDocument(customerDocument1),
+				CustomerDocument: domain.CryptDocument(customerDocument1),
 				Value:            1235.23,
 				Contract:         "bc063153-fb9e-4334-9a6c-0d069a42065b",
 				DebtDate:         time.Date(2015, 11, 13, 23, 32, 51, 0, time.UTC),
@@ -73,7 +73,7 @@ func TestApi_Run(t *testing.T) {
 			{
 				CompanyDocument:  "77723018000146",
 				CompanyName:      "123 S.A.",
-				CustomerDocument: domain.CustomerDocument(customerDocument1),
+				CustomerDocument: domain.CryptDocument(customerDocument1),
 				Value:            400.0,
 				Contract:         "5f206825-3cfe-412f-8302-cc1b24a179b0",
 				DebtDate:         time.Date(2015, 10, 12, 23, 32, 51, 0, time.UTC),
@@ -92,7 +92,7 @@ func TestApi_Run(t *testing.T) {
 			{
 				CompanyDocument:  "04843574000182",
 				CompanyName:      "DBZ S.A.",
-				CustomerDocument: domain.CustomerDocument(customerDocument2),
+				CustomerDocument: domain.CryptDocument(customerDocument2),
 				Value:            59.99,
 				Contract:         "3132f136-3889-4efb-bf92-e1efbb3fe15e",
 				DebtDate:         time.Date(2015, 9, 11, 23, 32, 51, 0, time.UTC),
@@ -111,7 +111,7 @@ func TestApi_Run(t *testing.T) {
 			{
 				CompanyDocument:  "23993551000107",
 				CompanyName:      "XPTO S.A.",
-				CustomerDocument: domain.CustomerDocument(customerDocument3),
+				CustomerDocument: domain.CryptDocument(customerDocument3),
 				Value:            230.50,
 				Contract:         "8b441dbb-3bb4-4fc9-9b46-bdaad00a7a98",
 				DebtDate:         time.Date(2015, 8, 10, 23, 32, 51, 0, time.UTC),
@@ -130,7 +130,7 @@ func TestApi_Run(t *testing.T) {
 			{
 				CompanyDocument:  "23993551000107",
 				CompanyName:      "XPTO S.A.",
-				CustomerDocument: domain.CustomerDocument(customerDocument4),
+				CustomerDocument: domain.CryptDocument(customerDocument4),
 				Value:            230.50,
 				Contract:         "8b441dbb-3bb4-4fc9-9b46-bdaad00a7a98",
 				DebtDate:         time.Date(2015, 8, 10, 23, 32, 51, 0, time.UTC),
@@ -149,7 +149,36 @@ func TestApi_Run(t *testing.T) {
 			{
 				CompanyDocument:  "70170935000100",
 				CompanyName:      "ASD S.A.",
-				CustomerDocument: domain.CustomerDocument(customerDocument5),
+				CustomerDocument: domain.CryptDocument(customerDocument5),
+				Value:            10340.67,
+				Contract:         "d6628a0e-d4dd-4f14-8591-2ddc7f1bbeff",
+				DebtDate:         time.Date(2015, 7, 9, 23, 32, 51, 0, time.UTC),
+				InclusionDate:    time.Date(2020, 7, 9, 23, 32, 51, 0, time.UTC),
+			},
+		})
+		g.Expect(response).Should(gomega.MatchJSON(expectedResponse))
+	})
+
+	t.Run("2 times integrate, should not duplicate persisted negatives", func(t *testing.T) {
+		resp, err := http.Post(applicationEndpoint+"/legacy/integrate", "application/json", nil)
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+
+		resp, err = http.Post(applicationEndpoint+"/legacy/integrate", "application/json", nil)
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+
+		customerDocument5 := "25124543043"
+		negativesRoute := fmt.Sprintf("/negatives?customerDocument=%s", customerDocument5)
+		resp, err = http.Get(applicationEndpoint + negativesRoute)
+		g.Expect(err).ShouldNot(gomega.HaveOccurred())
+		g.Expect(resp.StatusCode).Should(gomega.Equal(http.StatusOK))
+		response := readResponseBody(g, resp)
+		expectedResponse := getJsendJson(g, []domain.Negative{
+			{
+				CompanyDocument:  "70170935000100",
+				CompanyName:      "ASD S.A.",
+				CustomerDocument: domain.CryptDocument(customerDocument5),
 				Value:            10340.67,
 				Contract:         "d6628a0e-d4dd-4f14-8591-2ddc7f1bbeff",
 				DebtDate:         time.Date(2015, 7, 9, 23, 32, 51, 0, time.UTC),

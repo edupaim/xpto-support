@@ -28,20 +28,23 @@ func TestNegative_DatesToUTC(t *testing.T) {
 
 func TestNegative_EncryptCustomerDocument(t *testing.T) {
 	g := gomega.NewWithT(t)
-	document := CustomerDocument("51537476467")
+	customerDocument := CryptDocument("51537476467")
+	companyDocument := CryptDocument("59291534000167")
 	negative := Negative{
-		CompanyDocument:  "59291534000167",
+		CompanyDocument:  companyDocument,
 		CompanyName:      "ABC S.A.",
-		CustomerDocument: document,
+		CustomerDocument: customerDocument,
 		Value:            1235.23,
 		Contract:         "bc063153-fb9e-4334-9a6c-0d069a42065b",
 		DebtDate:         time.Date(2015, 11, 13, 20, 32, 51, 0, time.UTC),
 		InclusionDate:    time.Date(2020, 11, 13, 20, 32, 51, 0, time.UTC),
 	}
-	err := negative.EncryptCustomerDocument()
+	err := negative.EncryptDocuments()
 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
-	g.Expect(negative.CustomerDocument).ShouldNot(gomega.Equal(document))
-	err = negative.DecryptCustomerDocument()
+	g.Expect(negative.CustomerDocument).ShouldNot(gomega.Equal(customerDocument))
+	g.Expect(negative.CompanyDocument).ShouldNot(gomega.Equal(companyDocument))
+	err = negative.DecryptDocuments()
 	g.Expect(err).ShouldNot(gomega.HaveOccurred())
-	g.Expect(negative.CustomerDocument).Should(gomega.Equal(document))
+	g.Expect(negative.CustomerDocument).Should(gomega.Equal(customerDocument))
+	g.Expect(negative.CompanyDocument).Should(gomega.Equal(companyDocument))
 }
