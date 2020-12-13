@@ -1,0 +1,14 @@
+{
+  "ServerConfig": {
+    "Port": 5051
+  },
+  "ArangoConfig": {
+    "Address": "http://localhost:8529",
+    "Password": "root",
+    "User": "root",
+    "Database": "xpto-support"
+  },
+  "LegacyXptoConfig": {
+    "Address": "http://localhost:8080"
+  }
+}
