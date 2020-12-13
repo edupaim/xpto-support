@@ -5,7 +5,7 @@ import (
 	"github.com/arangodb/go-driver/http"
 )
 
-const negativesCollectionName = "negatives"
+const NegativesCollectionName = "negatives"
 
 type ArangoConfig struct {
 	Address  string
@@ -31,18 +31,18 @@ func GetDatabase(dbName string, arangoClient driver.Client) (driver.Database, er
 }
 
 func GetNegativesCollection(db driver.Database) (driver.Collection, error) {
-	exist, err := db.CollectionExists(nil, negativesCollectionName)
+	exist, err := db.CollectionExists(nil, NegativesCollectionName)
 	if err != nil {
 		return nil, err
 	}
 	if !exist {
-		coll, err := db.CreateCollection(nil, negativesCollectionName, nil)
+		coll, err := db.CreateCollection(nil, NegativesCollectionName, nil)
 		if err != nil {
 			return nil, err
 		}
 		return coll, nil
 	}
-	return db.Collection(nil, negativesCollectionName)
+	return db.Collection(nil, NegativesCollectionName)
 }
 
 func GetArangoClient(c ArangoConfig) (driver.Client, error) {

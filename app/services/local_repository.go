@@ -67,7 +67,7 @@ func (localStorage *ArangoLocalRepository) GetNegativeByCustomerDocument(documen
 	logCtx := logrus.WithContext(ctx)
 	cursor, err := localStorage.arangoDatabase.Query(nil, "FOR n IN @@coll FILTER n.customerDocument == @customerDocument RETURN n",
 		map[string]interface{}{
-			"@coll":            negativesCollectionName,
+			"@coll":            NegativesCollectionName,
 			"customerDocument": document,
 		})
 	if err != nil {

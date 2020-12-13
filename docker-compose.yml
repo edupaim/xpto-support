@@ -7,7 +7,7 @@ services:
     ports:
       - 8080:80
     volumes:
-      - ./mock_file/mock_negative.json:/data/db.json
+      - ./docker-files/mock_negative.json:/data/db.json
 
   arangodb:
     image: arangodb:latest
@@ -18,7 +18,6 @@ services:
 
   elasticsearch:
     image: elasticsearch:7.4.0
-    container_name: elasticsearch
     ports:
       - 9200:9200
     environment:
@@ -26,18 +25,37 @@ services:
 
   kibana:
     image: kibana:7.4.0
-    container_name: kibana
     ports:
       - 5601:5601
     depends_on:
-      - 'elasticsearch'
+      - elasticsearch
 
   apm-server:
     image: elastic/apm-server:7.4.0
-    container_name: apm_server
     ports:
       - 8200:8200
     command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
     depends_on:
-      - 'elasticsearch'
-      - 'kibana'
+      - elasticsearch
+      - kibana
+
+  ambassador:
+    image: quay.io/datawire/ambassador:0.72.0
+    ports:
+      - "81:80"
+    volumes:
+      - ./docker-files/ambassador.yaml:/ambassador/ambassador-config/ambassador.yaml
+
+  xpto-support:
+    image: xpto-support:0.0.0
+    command: "--config=/app/config.json --port=5051"
+    ports:
+      - 5051:5051
+    volumes:
+      - ./docker-files/config.json:/app/config.json
+    environment:
+      - ELASTIC_APM_SERVICE_NAME=xpto-support
+      - ELASTIC_APM_SERVER_URL=http://apm-server:8200
+      - XPTO_PASSPHRASE=myCustomPassphraseToCryptData
+    depends_on:
+      - arangodb

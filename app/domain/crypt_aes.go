@@ -19,7 +19,7 @@ var cryptPassphrase string
 var aesCrypt *aesCrypto
 
 func SetCryptPassphrase(passphrase string) error {
-	cryptPassphrase = passphrase
+	cryptPassphrase = createHash(passphrase)
 	return loadAesCrypt()
 }
 

@@ -1,0 +1,13 @@
+apiVersion: ambassador/v1
+kind:  Module
+name:  ambassador
+config:
+  service_port: 80
+---
+apiVersion: ambassador/v1
+kind: Mapping
+name: xpto-support
+prefix: /
+service: xpto-support:8080
+headers:
+  x-auth-key: vgtd61gBEpw6HNWTovzDPuQkXTDS6H0P
