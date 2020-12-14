@@ -23,3 +23,6 @@ run-test:  ## Run project tests
 	mkdir -p ./test/cover
 	go test ./... -race -coverpkg=./... -coverprofile=./test/cover/cover.out
 	go tool cover -html=./test/cover/cover.out -o ./test/cover/cover.html
+
+generate-requests:
+	bash ./generate_requests.sh

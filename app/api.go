@@ -33,7 +33,7 @@ func InitializeApi(c *Config) (*Api, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = api.initializeControllers()
+	err = api.initializeControllers(c)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func InitializeApi(c *Config) (*Api, error) {
 	return api, nil
 }
 
-func (api *Api) initializeControllers() error {
+func (api *Api) initializeControllers(c *Config) error {
 	legacyController := command.NewLegacyIntegrateController(api.services.legacyRepository, api.services.localRepository)
 	api.controllers.legacyIntegrate = legacyController
 	negativeController := query.NewNegativeQueryController(api.services.localRepository)
