@@ -4,12 +4,12 @@ Essa aplicação tem como objetivo integrar as informações e escoar o fluxo de
 # Inicialização da aplicação
 
 ## Dependências
-Para fazer compilar a aplicação é necessário o go na versão > 1.13
+Para compilar o código da aplicação é necessário o go na versão > 1.13
 
-Para gerar imagem docker e rodar a stack docker-compose é necessário docker.
+Para gerar imagem docker e rodar a stack docker-compose é necessário o docker.
 
 ## Build
-* Para fazer o build da aplicação utilize o comando: `make build`
+* Para compilar o código da aplicação utilize o comando: `make build`
 
 ## Docker
 * Para gerar imagem docker da aplicação utilize o comando: `make docker-build`
