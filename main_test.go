@@ -32,7 +32,7 @@ var config = app.Config{
 	},
 }
 
-func TestApi_Run(t *testing.T) {
+func TestIntegrationApi(t *testing.T) {
 	g := gomega.NewWithT(t)
 	logrus.SetLevel(logrus.DebugLevel)
 

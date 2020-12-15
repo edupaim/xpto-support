@@ -31,7 +31,7 @@ run-test:  ## Run project tests
 	go tool cover -html=./test/cover/cover.out -o ./test/cover/cover.html
 
 run-integration-test: ## Run integration tests
-	go test -run TestApi_Run
+	go test -run TestIntegrationApi
 
 generate-requests:
 	bash ./generate_requests.sh
